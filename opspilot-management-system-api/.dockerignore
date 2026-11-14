@@ -1,0 +1,9 @@
+.git
+.idea
+.agents
+.env
+.env.*
+!.env.example
+target
+docs
+*.log

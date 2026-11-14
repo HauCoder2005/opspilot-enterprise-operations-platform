@@ -1,0 +1,28 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: opspilot-api:local
+    network_mode: host
+    env_file:
+      - path: .env
+        required: false
+      - path: .env.dev
+        required: false
+      - path: .env.local
+        required: false
+    environment:
+      DB_HOST: ${DB_HOST:-127.0.0.1}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-opspilot}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-}
+      JAVA_TOOL_OPTIONS: ${JVM_MEMORY_OPTIONS:--XX:MaxRAMPercentage=75.0}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:${SERVER_PORT:-8080}/actuator/health/liveness"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped

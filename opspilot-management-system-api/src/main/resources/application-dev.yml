@@ -1,0 +1,9 @@
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+
+logging:
+  level:
+    dev.opspilot: ${LOG_LEVEL:INFO}

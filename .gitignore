@@ -1,0 +1,34 @@
+cd /data/projects/opspilot-enterprise-operations-platform
+
+touch .gitignore
+
+cat >> .gitignore <<'EOF'
+
+# Environment and secrets
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.p12
+
+# Java
+**/target/
+**/*.class
+
+# Python / Data Science
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/model-artifacts/
+**/datasets/raw/
+
+# Node.js / Web / Mobile
+**/node_modules/
+**/dist/
+**/.next/
+**/build/
+
+# IDE
+**/.idea/
+**/.vscode/
+EOF

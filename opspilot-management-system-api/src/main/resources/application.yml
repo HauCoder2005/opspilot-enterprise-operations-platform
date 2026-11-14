@@ -1,0 +1,95 @@
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+  application:
+    name: ${APP_NAME:opspilot-api}
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  threads:
+    virtual:
+      enabled: true
+  main:
+    keep-alive: true
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5432}/${DB_NAME:opspilot}?sslmode=${DB_SSLMODE:disable}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
+    hikari:
+      pool-name: OpsPilotHikariPool
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:30000}
+      validation-timeout: ${DB_VALIDATION_TIMEOUT_MS:5000}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: ${FLYWAY_ENABLED:false}
+    locations: classpath:db/migration
+    validate-on-migrate: true
+  jackson:
+    default-property-inclusion: non_null
+    time-zone: UTC
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+app:
+  name: ${APP_NAME:opspilot-api}
+  api-base-path: ${API_BASE_PATH:/api/v1}
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    requests-per-minute: ${RATE_LIMIT_REQUESTS_PER_MINUTE:60}
+    burst-capacity: ${RATE_LIMIT_BURST_CAPACITY:20}
+    max-clients: ${RATE_LIMIT_MAX_CLIENTS:10000}
+    client-idle-minutes: ${RATE_LIMIT_CLIENT_IDLE_MINUTES:15}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  security:
+    jwt-enabled: ${JWT_ENABLED:false}
+    jwt-access-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:15}
+    jwt-refresh-ttl-days: ${JWT_REFRESH_TTL_DAYS:7}
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+    filter: ${SWAGGER_FILTER_ENABLED:true}
+    try-it-out-enabled: ${SWAGGER_TRY_IT_OUT_ENABLED:true}
+    tags-sorter: alpha
+    operations-sorter: alpha
+    doc-expansion: none
+    display-request-duration: true
+    deep-linking: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
+
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    dev.opspilot: ${LOG_LEVEL:INFO}
+    org.hibernate.SQL: WARN

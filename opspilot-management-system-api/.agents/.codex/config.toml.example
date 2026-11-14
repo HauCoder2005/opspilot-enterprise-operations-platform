@@ -1,0 +1,5 @@
+# OPTIONAL per-project Codex preferences (not active until copied to .codex/config.toml).
+# Review existing settings before merging. Supported values depend on the selected model/client.
+# Prefer switching reasoning level in the Codex UI for individual hard tasks.
+model_reasoning_effort = "medium"
+model_verbosity = "low"
