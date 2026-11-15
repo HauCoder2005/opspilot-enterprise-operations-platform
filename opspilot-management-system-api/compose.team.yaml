@@ -1,0 +1,77 @@
+name: opspilot-team
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${TEAM_DB_NAME:-opspilot}
+      POSTGRES_USER: ${TEAM_DB_SUPERUSER:-postgres}
+      POSTGRES_PASSWORD: ${TEAM_DB_PASSWORD:?Set TEAM_DB_PASSWORD in .env.local}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      TZ: ${TEAM_DB_TIMEZONE:-Asia/Ho_Chi_Minh}
+    ports:
+      - "127.0.0.1:${TEAM_DB_PORT:-55432}:5432"
+    volumes:
+      - team-postgres-data:/var/lib/postgresql
+      - ./database/bootstrap/01_roles.sql:/docker-entrypoint-initdb.d/01_roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  migrate:
+    image: flyway/flyway:12.4.0
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db:5432/${TEAM_DB_NAME:-opspilot}
+      FLYWAY_USER: ${TEAM_DB_SUPERUSER:-postgres}
+      FLYWAY_PASSWORD: ${TEAM_DB_PASSWORD:?Set TEAM_DB_PASSWORD in .env.local}
+      FLYWAY_DEFAULT_SCHEMA: public
+      FLYWAY_LOCATIONS: filesystem:/flyway/migrations
+      FLYWAY_CONNECT_RETRIES: 20
+      FLYWAY_BASELINE_ON_MIGRATE: "false"
+      FLYWAY_CLEAN_DISABLED: "true"
+      FLYWAY_VALIDATE_ON_MIGRATE: "true"
+      FLYWAY_VALIDATE_MIGRATION_NAMING: "true"
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/migrations:ro
+    command: migrate
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: opspilot-api:local
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${TEAM_DB_NAME:-opspilot}
+      DB_USERNAME: ${TEAM_DB_SUPERUSER:-postgres}
+      DB_PASSWORD: ${TEAM_DB_PASSWORD:?Set TEAM_DB_PASSWORD in .env.local}
+      FLYWAY_ENABLED: "false"
+      SWAGGER_ENABLED: "true"
+      JAVA_TOOL_OPTIONS: ${JVM_MEMORY_OPTIONS:--XX:MaxRAMPercentage=75.0}
+    ports:
+      - "127.0.0.1:${TEAM_API_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:8080/actuator/health/liveness"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  team-postgres-data:

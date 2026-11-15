@@ -34,6 +34,8 @@ spring:
   flyway:
     enabled: ${FLYWAY_ENABLED:false}
     locations: classpath:db/migration
+    baseline-on-migrate: false
+    clean-disabled: true
     validate-on-migrate: true
   jackson:
     default-property-inclusion: non_null
