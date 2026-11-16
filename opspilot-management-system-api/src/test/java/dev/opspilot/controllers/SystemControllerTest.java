@@ -1,7 +1,7 @@
 package dev.opspilot.controllers;
 
 import dev.opspilot.configs.AppProperties;
-import dev.opspilot.dtos.responses.PingResponse;
+import dev.opspilot.dtos.PingResponse;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

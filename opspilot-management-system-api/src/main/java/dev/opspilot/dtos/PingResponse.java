@@ -1,4 +1,4 @@
-package dev.opspilot.dtos.responses;
+package dev.opspilot.dtos;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

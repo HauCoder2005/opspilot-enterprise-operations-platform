@@ -13,6 +13,6 @@ public class OpenApiConfig {
         return new OpenAPI().info(new Info()
                 .title(properties.name())
                 .version("v1")
-                .description("REST API nền tảng của OpsPilot."));
+                .description("REST API nền tảng của OpsPilot dành cho doanh nghiệp."));
     }
 }
