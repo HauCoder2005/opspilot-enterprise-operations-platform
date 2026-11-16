@@ -1,5 +1,6 @@
 package dev.opspilot.configs;
 
+import dev.opspilot.security.SecurityErrorHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,12 +21,16 @@ public class SecurityConfig {
     SecurityFilterChain apiSecurityFilterChain(
             HttpSecurity http,
             AppProperties properties,
+            SecurityErrorHandler securityErrorHandler,
             @Value("${springdoc.api-docs.enabled:false}") boolean swaggerEnabled
     ) throws Exception {
         String pingPath = properties.apiBasePath() + "/system/ping";
 
         http
                 .cors(Customizer.withDefaults())
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(securityErrorHandler)
+                        .accessDeniedHandler(securityErrorHandler))
                 .authorizeHttpRequests(authorize -> {
                     authorize.requestMatchers(HttpMethod.GET, pingPath).permitAll();
                     authorize.requestMatchers(

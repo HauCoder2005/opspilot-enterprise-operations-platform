@@ -91,6 +91,8 @@ management:
           include: readinessState,db
 
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] [%X{traceId:-}] %logger{36} - %msg%n%wEx"
   level:
     root: ${LOG_LEVEL:INFO}
     dev.opspilot: ${LOG_LEVEL:INFO}
