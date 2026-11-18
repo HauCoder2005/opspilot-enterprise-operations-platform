@@ -17,8 +17,7 @@ public record AppProperties(
         @NotBlank String name,
         @NotBlank String apiBasePath,
         @Valid RateLimit rateLimit,
-        @Valid Cors cors,
-        @Valid Security security
+        @Valid Cors cors
 ) {
     public record RateLimit(
             boolean enabled,
@@ -33,12 +32,5 @@ public record AppProperties(
     }
 
     public record Cors(@NotEmpty List<@NotBlank String> allowedOrigins) {
-    }
-
-    public record Security(
-            boolean jwtEnabled,
-            @Min(1) int jwtAccessTtlMinutes,
-            @Min(1) int jwtRefreshTtlDays
-    ) {
     }
 }

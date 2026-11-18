@@ -35,9 +35,10 @@ trước migration.
 
 Team stack hiện giữ cách đăng nhập đơn giản bằng local superuser cho API và Flyway.
 Đây chỉ là tiện ích phát triển. Superuser bỏ qua RLS, nên kết quả chạy bằng `postgres`
-không chứng minh khả năng cô lập tenant production. Khi tách credential, cấp secret
-riêng cho migration user có quyền `SET ROLE opspilot_owner` và cho API
-`opspilot_app`; tuyệt đối không dùng owner/job/ETL cho request REST.
+không chứng minh khả năng cô lập tenant production. Lúc khởi động, ứng dụng gọi
+`rls_session_check()`: ở profile dev chỉ ghi WARN; ở profile `prod` **từ chối khởi động**
+nếu datasource không phải `opspilot_app` (superuser, BYPASSRLS, owner/job/ETL đều bị chặn).
+Tuyệt đối không dùng owner/job/ETL cho request REST.
 
 ## Thiết lập cho developer mới
 
@@ -208,6 +209,8 @@ thay đổi database.
   rỗng.
 - `password authentication failed`: kiểm tra đúng credential của team volume; đổi
   biến sau khi volume đã init không đổi password trong database.
+- `Datasource không chịu Row-Level Security; từ chối khởi động ở profile prod`: API prod
+  đang kết nối bằng user khác `opspilot_app`; sửa `DB_USERNAME`/`DB_PASSWORD`.
 - `Connection refused`: chờ healthcheck, kiểm tra `docker compose ps` và log `db`.
 - `role "opspilot_owner" does not exist`: role bootstrap chưa chạy; dùng volume mới
   đúng cấu hình hoặc provision role có kiểm soát, không nhét `CREATE ROLE` vào V1.
@@ -232,3 +235,4 @@ Team stack không phải mô hình production: password local dùng một login,
 publish trên loopback, và API chạy bằng superuser để onboarding đơn giản. Kiểm thử RLS
 production phải kết nối bằng `opspilot_app`, đặt tenant context trong transaction và
 thử cả truy cập chéo tenant; kết quả bằng superuser không có giá trị chứng minh isolation.
+Integration test (Testcontainers) luôn kết nối bằng `opspilot_app`.
