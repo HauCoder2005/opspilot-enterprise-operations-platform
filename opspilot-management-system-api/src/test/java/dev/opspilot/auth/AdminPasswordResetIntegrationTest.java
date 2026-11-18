@@ -1,6 +1,6 @@
 package dev.opspilot.auth;
 
-import dev.opspilot.security.OpsPilotPrincipal;
+import dev.opspilot.security.authentication.OpsPilotPrincipal;
 import dev.opspilot.services.iam.IUserManagementPolicy;
 import dev.opspilot.support.ApiClient.Response;
 import org.junit.jupiter.api.BeforeEach;

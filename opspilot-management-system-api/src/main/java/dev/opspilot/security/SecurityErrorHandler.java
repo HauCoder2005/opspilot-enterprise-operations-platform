@@ -1,5 +1,7 @@
 package dev.opspilot.security;
 
+import dev.opspilot.security.authentication.OpsPilotPrincipal;
+
 import dev.opspilot.dtos.ApiErrorResponse;
 import dev.opspilot.enums.ApiHttpStatus;
 import dev.opspilot.enums.ErrorCode;

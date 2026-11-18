@@ -1,16 +1,16 @@
 package dev.opspilot.services.auth;
 
-import dev.opspilot.configs.LoginProperties;
+import dev.opspilot.configs.auth.LoginProperties;
 import dev.opspilot.enums.ErrorCode;
 import dev.opspilot.exceptions.ApiException;
 import dev.opspilot.repositories.audit.AuditLogRepository;
 import dev.opspilot.repositories.audit.AuditLogRepository.AuditEntry;
 import dev.opspilot.repositories.audit.AuditLogRepository.Result;
 import dev.opspilot.repositories.auth.LoginAccountRepository;
-import dev.opspilot.repositories.auth.RefreshTokenRepository.RevokeReason;
+import dev.opspilot.enums.iam.RefreshTokenRevokeReason;
 import dev.opspilot.repositories.auth.UserCredentialRepository;
 import dev.opspilot.repositories.auth.UserCredentialRepository.SessionUser;
-import dev.opspilot.security.OpsPilotPrincipal;
+import dev.opspilot.security.authentication.OpsPilotPrincipal;
 import dev.opspilot.security.tenant.TenantDatabaseContext;
 import dev.opspilot.validators.PasswordPolicy;
 import org.slf4j.Logger;
@@ -93,7 +93,7 @@ public class PasswordChangeService {
             if (!users.changeOwnPassword(orgId, userId, user.passwordHash(), newHash)) {
                 return false;
             }
-            int revoked = refreshTokens.revokeAllInCurrentTransaction(orgId, userId, RevokeReason.PASSWORD_CHANGED);
+            int revoked = refreshTokens.revokeAllInCurrentTransaction(orgId, userId, RefreshTokenRevokeReason.PASSWORD_CHANGED);
             audit(orgId, userId, Result.SUCCESS, null, "{\"revokedRefreshTokens\":" + revoked + "}", client);
             return true;
         }));

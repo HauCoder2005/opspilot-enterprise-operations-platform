@@ -1,6 +1,6 @@
 package dev.opspilot.services.auth;
 
-import dev.opspilot.configs.AuthTokenProperties;
+import dev.opspilot.configs.auth.AuthTokenProperties;
 import dev.opspilot.enums.ClientType;
 import dev.opspilot.enums.ErrorCode;
 import dev.opspilot.exceptions.ApiException;
@@ -8,7 +8,7 @@ import dev.opspilot.repositories.audit.AuditLogRepository;
 import dev.opspilot.repositories.audit.AuditLogRepository.AuditEntry;
 import dev.opspilot.repositories.audit.AuditLogRepository.Result;
 import dev.opspilot.repositories.auth.RefreshTokenRepository;
-import dev.opspilot.repositories.auth.RefreshTokenRepository.RevokeReason;
+import dev.opspilot.enums.iam.RefreshTokenRevokeReason;
 import dev.opspilot.repositories.auth.RefreshTokenRepository.StoredToken;
 import dev.opspilot.repositories.auth.RefreshTokenRepository.TokenRow;
 import dev.opspilot.repositories.auth.UserCredentialRepository;
@@ -84,8 +84,8 @@ public class RefreshTokenService {
             }
             TokenRow row = found.get();
             if (row.revoked()) {
-                if (RevokeReason.ROTATED.name().equals(row.revokeReason())) {
-                    int revoked = tokens.revokeFamily(orgId, row.familyId(), RevokeReason.REUSE_DETECTED);
+                if (RefreshTokenRevokeReason.ROTATED.name().equals(row.revokeReason())) {
+                    int revoked = tokens.revokeFamily(orgId, row.familyId(), RefreshTokenRevokeReason.REUSE_DETECTED);
                     audit(orgId, row.userId(), ACTION_REFRESH, Result.FAILURE, "REFRESH_TOKEN_REUSE",
                             "{\"familyId\":" + row.familyId() + ",\"revoked\":" + revoked + "}", client);
                     log.warn("Refresh token reuse detected: orgId={}, userId={}, familyId={}, revoked={}",
@@ -101,7 +101,7 @@ public class RefreshTokenService {
             }
             Optional<SessionUser> user = users.findSessionUser(orgId, row.userId());
             if (user.isEmpty() || !user.get().isActive()) {
-                tokens.revokeFamily(orgId, row.familyId(), RevokeReason.ADMIN);
+                tokens.revokeFamily(orgId, row.familyId(), RefreshTokenRevokeReason.ADMIN);
                 audit(orgId, row.userId(), ACTION_REFRESH, Result.DENIED, "ACCOUNT_NOT_ACTIVE", null, client);
                 return Outcome.rejected("ACCOUNT_NOT_ACTIVE", row.userId());
             }
@@ -135,7 +135,7 @@ public class RefreshTokenService {
         transaction.executeWithoutResult(status -> {
             tenantContext.bind(orgId.get());
             tokens.findForUpdate(orgId.get(), hash).ifPresent(row -> {
-                int revoked = tokens.revokeFamily(orgId.get(), row.familyId(), RevokeReason.LOGOUT);
+                int revoked = tokens.revokeFamily(orgId.get(), row.familyId(), RefreshTokenRevokeReason.LOGOUT);
                 if (revoked > 0) {
                     audit(orgId.get(), row.userId(), ACTION_LOGOUT, Result.SUCCESS, null,
                             "{\"familyId\":" + row.familyId() + ",\"revoked\":" + revoked + "}", client);
@@ -148,14 +148,14 @@ public class RefreshTokenService {
     public void logoutAll(long organizationId, long userId, ClientInfo client) {
         transaction.executeWithoutResult(status -> {
             tenantContext.bind(organizationId);
-            int revoked = tokens.revokeAllForUser(organizationId, userId, RevokeReason.LOGOUT);
+            int revoked = tokens.revokeAllForUser(organizationId, userId, RefreshTokenRevokeReason.LOGOUT);
             users.incrementTokenVersion(organizationId, userId);
             audit(organizationId, userId, ACTION_LOGOUT_ALL, Result.SUCCESS, null, "{\"revoked\":" + revoked + "}", client);
         });
     }
 
     /** Thu hồi mọi refresh token của user trong giao dịch hiện tại (đổi/reset mật khẩu). */
-    public int revokeAllInCurrentTransaction(long organizationId, long userId, RevokeReason reason) {
+    public int revokeAllInCurrentTransaction(long organizationId, long userId, RefreshTokenRevokeReason reason) {
         requireTransaction();
         return tokens.revokeAllForUser(organizationId, userId, reason);
     }

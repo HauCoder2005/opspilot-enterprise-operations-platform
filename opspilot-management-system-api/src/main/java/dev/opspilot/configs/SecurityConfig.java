@@ -1,8 +1,8 @@
 package dev.opspilot.configs;
 
-import dev.opspilot.security.JwtPrincipalConverter;
-import dev.opspilot.security.OpsPilotPrincipal;
-import dev.opspilot.security.RefreshTokenCookies;
+import dev.opspilot.security.authentication.JwtPrincipalConverter;
+import dev.opspilot.security.authentication.OpsPilotPrincipal;
+import dev.opspilot.security.authentication.RefreshTokenCookies;
 import dev.opspilot.security.SecurityErrorHandler;
 import dev.opspilot.security.filters.RequestIdFilter;
 import jakarta.servlet.DispatcherType;

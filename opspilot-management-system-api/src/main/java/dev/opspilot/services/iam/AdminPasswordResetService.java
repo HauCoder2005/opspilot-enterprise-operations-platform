@@ -6,9 +6,9 @@ import dev.opspilot.repositories.audit.AuditLogRepository;
 import dev.opspilot.repositories.audit.AuditLogRepository.ActorType;
 import dev.opspilot.repositories.audit.AuditLogRepository.AuditEntry;
 import dev.opspilot.repositories.audit.AuditLogRepository.Result;
-import dev.opspilot.repositories.auth.RefreshTokenRepository.RevokeReason;
+import dev.opspilot.enums.iam.RefreshTokenRevokeReason;
 import dev.opspilot.repositories.auth.UserCredentialRepository;
-import dev.opspilot.security.OpsPilotPrincipal;
+import dev.opspilot.security.authentication.OpsPilotPrincipal;
 import dev.opspilot.security.tenant.TenantDatabaseContext;
 import dev.opspilot.services.auth.ClientInfo;
 import dev.opspilot.services.auth.RefreshTokenService;
@@ -83,7 +83,7 @@ public class AdminPasswordResetService {
             if (!users.adminResetPassword(orgId, targetUserId, hash, actor.userId())) {
                 return null;
             }
-            int count = refreshTokens.revokeAllInCurrentTransaction(orgId, targetUserId, RevokeReason.ADMIN);
+            int count = refreshTokens.revokeAllInCurrentTransaction(orgId, targetUserId, RefreshTokenRevokeReason.ADMIN);
             audit(orgId, actor, targetUserId, Result.SUCCESS, null, "{\"revokedRefreshTokens\":" + count + "}", client);
             return count;
         });

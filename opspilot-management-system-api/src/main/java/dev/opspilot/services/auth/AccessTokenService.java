@@ -1,7 +1,7 @@
 package dev.opspilot.services.auth;
 
-import dev.opspilot.configs.AuthTokenProperties;
-import dev.opspilot.configs.JwtConfig;
+import dev.opspilot.configs.auth.AuthTokenProperties;
+import dev.opspilot.configs.auth.JwtConfig;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;

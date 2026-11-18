@@ -1,6 +1,6 @@
 package dev.opspilot.services.iam;
 
-import dev.opspilot.security.OpsPilotPrincipal;
+import dev.opspilot.security.authentication.OpsPilotPrincipal;
 
 /**
  * Cổng phân quyền quản trị tài khoản, do policy service của KAN-81 cung cấp implementation.

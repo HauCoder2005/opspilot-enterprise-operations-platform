@@ -1,5 +1,6 @@
 package dev.opspilot.repositories.auth;
 
+import dev.opspilot.enums.iam.RefreshTokenRevokeReason;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -82,7 +83,7 @@ public class RefreshTokenRepository {
                 .update();
     }
 
-    public int revokeFamily(long organizationId, long familyId, RevokeReason reason) {
+    public int revokeFamily(long organizationId, long familyId, RefreshTokenRevokeReason reason) {
         return jdbcClient.sql("""
                         UPDATE refresh_token SET revoked_at = now(), revoke_reason = :reason
                          WHERE organization_id = :orgId AND family_id = :familyId AND revoked_at IS NULL
@@ -93,7 +94,7 @@ public class RefreshTokenRepository {
                 .update();
     }
 
-    public int revokeAllForUser(long organizationId, long userId, RevokeReason reason) {
+    public int revokeAllForUser(long organizationId, long userId, RefreshTokenRevokeReason reason) {
         return jdbcClient.sql("""
                         UPDATE refresh_token SET revoked_at = now(), revoke_reason = :reason
                          WHERE organization_id = :orgId AND user_id = :userId AND revoked_at IS NULL
@@ -107,9 +108,6 @@ public class RefreshTokenRepository {
     private static String truncate(String value) {
         return value == null || value.length() <= USER_AGENT_MAX_LENGTH ? value : value.substring(0, USER_AGENT_MAX_LENGTH);
     }
-
-    /** Khớp ràng buộc {@code ck_refresh_token_reason}. */
-    public enum RevokeReason { LOGOUT, ROTATED, REUSE_DETECTED, ADMIN, PASSWORD_CHANGED }
 
     public record StoredToken(long id, long familyId, Instant expiresAt) {
     }

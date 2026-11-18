@@ -1,6 +1,6 @@
 package dev.opspilot.auth;
 
-import dev.opspilot.configs.JwtConfig;
+import dev.opspilot.configs.auth.JwtConfig;
 import dev.opspilot.support.ApiClient;
 import dev.opspilot.support.PostgresTestDatabase;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,10 +1,10 @@
 package dev.opspilot.services.auth;
 
-import dev.opspilot.dtos.CurrentUserResponse;
+import dev.opspilot.dtos.auth.CurrentUserResponse;
 import dev.opspilot.enums.ErrorCode;
 import dev.opspilot.exceptions.ApiException;
 import dev.opspilot.repositories.auth.UserCredentialRepository;
-import dev.opspilot.security.OpsPilotPrincipal;
+import dev.opspilot.security.authentication.OpsPilotPrincipal;
 import dev.opspilot.security.tenant.TenantDatabaseContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;

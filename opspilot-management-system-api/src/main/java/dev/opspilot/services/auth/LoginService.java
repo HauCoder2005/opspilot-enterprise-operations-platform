@@ -1,8 +1,8 @@
 package dev.opspilot.services.auth;
 
-import dev.opspilot.configs.LoginProperties;
-import dev.opspilot.dtos.LoginRequest;
-import dev.opspilot.dtos.LoginResponse;
+import dev.opspilot.configs.auth.LoginProperties;
+import dev.opspilot.dtos.auth.LoginRequest;
+import dev.opspilot.dtos.auth.LoginResponse;
 import dev.opspilot.enums.ErrorCode;
 import dev.opspilot.exceptions.ApiException;
 import dev.opspilot.repositories.audit.AuditLogRepository;
