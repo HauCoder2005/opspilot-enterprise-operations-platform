@@ -61,8 +61,7 @@ class RateLimitFilterTest {
                 "opspilot-api",
                 "/api/v1",
                 new AppProperties.RateLimit(enabled, requestsPerMinute, burstCapacity, 100, 15),
-                new AppProperties.Cors(List.of("http://localhost:3000")),
-                new AppProperties.Security(false, 15, 7)
+                new AppProperties.Cors(List.of("http://localhost:3000"))
         );
     }
 }

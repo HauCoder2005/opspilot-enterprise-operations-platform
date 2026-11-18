@@ -2,6 +2,7 @@ package dev.opspilot.security.filters;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.MDC;
@@ -21,6 +22,12 @@ public class RequestIdFilter extends OncePerRequestFilter {
     public static final String TRACE_ID_MDC_KEY = "traceId";
 
     private static final String TRACE_ID_ATTRIBUTE = RequestIdFilter.class.getName() + ".traceId";
+
+    /** Trace id do backend sinh cho request hiện tại (dùng cho audit_log.request_id); null nếu filter chưa chạy. */
+    public static String currentTraceId(ServletRequest request) {
+        Object value = request.getAttribute(TRACE_ID_ATTRIBUTE);
+        return value instanceof String traceId ? traceId : null;
+    }
 
     @Override
     protected boolean shouldNotFilterAsyncDispatch() {

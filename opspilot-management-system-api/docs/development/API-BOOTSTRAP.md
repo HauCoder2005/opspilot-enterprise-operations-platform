@@ -6,7 +6,7 @@
 - PostgreSQL 18 đã có database `opspilot`; bootstrap này không tạo database, role, bảng hay migration.
 - Maven Wrapper đi kèm repository, không cần cài Maven hệ thống.
 
-Tài khoản `postgres` cục bộ là superuser và **bỏ qua RLS**. Đây chỉ là giới hạn chấp nhận cho phát triển ban đầu, không chứng minh được phân quyền theo tổ chức/chi nhánh và không được dùng làm mẫu production.
+Tài khoản `postgres` cục bộ là superuser và **bỏ qua RLS**. Đây chỉ là giới hạn chấp nhận cho phát triển, không chứng minh được phân quyền theo tổ chức/chi nhánh: khi khởi động, ứng dụng gọi `rls_session_check()` và ghi WARN ở profile dev. Ở profile `prod`, ứng dụng **từ chối khởi động** trừ khi kết nối bằng `opspilot_app`.
 
 ## Cấu hình môi trường
 
@@ -17,7 +17,9 @@ cp .env.example .env.local
 ./scripts/run-with-env.sh ./mvnw spring-boot:run
 ```
 
-Các biến đang có hiệu lực gồm cấu hình ứng dụng, datasource/Hikari, Flyway, Swagger, rate limit, JWT flag/TTL và CORS. `JWT_SECRET`, nhóm Storage, AI và Email trong template là **reserved**, chưa được bind và không bắt buộc khi khởi động. Giữ `JWT_ENABLED=false` cho đến khi IAM thực sự được triển khai.
+Các biến đang có hiệu lực gồm cấu hình ứng dụng, datasource/Hikari, Flyway, Swagger, rate limit, JWT/refresh token, chính sách đăng nhập và CORS. **`JWT_SECRET` là bắt buộc** (≥ 32 byte, tạo bằng `openssl rand -base64 48`); thiếu thì ứng dụng từ chối khởi động. Không commit giá trị thật. Nhóm Storage, AI và Email trong template vẫn là **reserved**.
+
+Cookie refresh token của client WEB mặc định có cờ `Secure`; trình duyệt vẫn chấp nhận trên `http://localhost`. Chỉ đặt `REFRESH_COOKIE_SECURE=false` khi dev qua HTTP trên host khác localhost.
 
 `FLYWAY_ENABLED=false` và `spring.jpa.hibernate.ddl-auto=none` là mặc định bắt buộc cho schema được bootstrap thủ công. Không bật Flyway trước khi lịch sử migration được review. JPA dùng cho lifecycle aggregate về sau; `JdbcClient` được Spring Boot cấu hình từ cùng `DataSource` để dùng cho SQL chuyên biệt. Cả hai không sở hữu schema trong task này.
 

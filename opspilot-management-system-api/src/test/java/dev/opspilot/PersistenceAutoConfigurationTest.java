@@ -78,6 +78,9 @@ class PersistenceAutoConfigurationTest {
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
+        // Bắt buộc từ KAN-76: secret JWT ngẫu nhiên chỉ cho test, không hardcode.
+        registry.add("app.auth.token.jwt-secret", () -> java.util.Base64.getEncoder()
+                .encodeToString(new java.security.SecureRandom().generateSeed(48)));
     }
 
     @AfterAll

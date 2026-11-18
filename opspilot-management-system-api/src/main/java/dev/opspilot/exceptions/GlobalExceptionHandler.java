@@ -14,6 +14,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.method.ParameterValidationResult;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -123,6 +124,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpectedException(Exception exception) {
+        // Lỗi Spring MVC có sẵn status (405, 406, 415...): giữ đúng status thay vì biến thành 500.
+        if (exception instanceof ErrorResponse errorResponse) {
+            ApiHttpStatus status = standardStatus(errorResponse.getStatusCode().value());
+            if (status != null && status.category() == ApiHttpStatus.Category.CLIENT_ERROR) {
+                log.debug("HTTP request rejected by framework status={}", status.getCode());
+                return response(status, status.name(), status.getReasonPhrase(), Map.of());
+            }
+        }
         log.error("Unexpected request failure type={}",
                 exception.getClass().getName(), sanitizedStackTrace(exception));
         return response(
@@ -147,6 +156,14 @@ public class GlobalExceptionHandler {
                 errors
         );
         return new ResponseEntity<>(body, status.toHttpStatusCode());
+    }
+
+    private static ApiHttpStatus standardStatus(int code) {
+        try {
+            return ApiHttpStatus.fromCode(code);
+        } catch (IllegalArgumentException unsupported) {
+            return null;
+        }
     }
 
     private static String currentTraceId() {
