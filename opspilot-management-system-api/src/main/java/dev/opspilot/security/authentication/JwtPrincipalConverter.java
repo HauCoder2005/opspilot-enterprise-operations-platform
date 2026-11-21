@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Optional;
 
 /**
@@ -43,9 +45,10 @@ public class JwtPrincipalConverter implements Converter<Jwt, AbstractAuthenticat
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
-        long userId = parseLong(jwt.getSubject(), "sub");
-        long orgId = parseLong(jwt.getClaims().get(JwtConfig.CLAIM_ORG_ID), JwtConfig.CLAIM_ORG_ID);
-        int tokenVersion = Math.toIntExact(parseLong(jwt.getClaims().get(JwtConfig.CLAIM_TOKEN_VERSION), JwtConfig.CLAIM_TOKEN_VERSION));
+        long userId = parsePositiveLong(jwt.getSubject(), "sub");
+        long orgId = parsePositiveLong(jwt.getClaims().get(JwtConfig.CLAIM_ORG_ID), JwtConfig.CLAIM_ORG_ID);
+        int tokenVersion = parseNonNegativeInt(
+                jwt.getClaims().get(JwtConfig.CLAIM_TOKEN_VERSION), JwtConfig.CLAIM_TOKEN_VERSION);
 
         Optional<SessionUser> user = readTransaction.execute(status -> {
             tenantContext.bind(orgId);
@@ -64,17 +67,43 @@ public class JwtPrincipalConverter implements Converter<Jwt, AbstractAuthenticat
         return new OpsPilotAuthenticationToken(principal, jwt);
     }
 
+    private static long parsePositiveLong(Object value, String claim) {
+        long parsed = parseLong(value, claim);
+        if (parsed <= 0) {
+            throw invalidClaim(claim);
+        }
+        return parsed;
+    }
+
+    private static int parseNonNegativeInt(Object value, String claim) {
+        long parsed = parseLong(value, claim);
+        if (parsed < 0 || parsed > Integer.MAX_VALUE) {
+            throw invalidClaim(claim);
+        }
+        return (int) parsed;
+    }
+
     private static long parseLong(Object value, String claim) {
         try {
-            if (value instanceof Number number) {
-                return number.longValue();
+            if (value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long) {
+                return ((Number) value).longValue();
+            }
+            if (value instanceof BigInteger integer) {
+                return integer.longValueExact();
+            }
+            if (value instanceof BigDecimal decimal) {
+                return decimal.longValueExact();
             }
             if (value instanceof String text) {
                 return Long.parseLong(text);
             }
-        } catch (NumberFormatException ignored) {
+        } catch (ArithmeticException | NumberFormatException ignored) {
             // rơi xuống lỗi chung
         }
-        throw new InvalidBearerTokenException("Invalid claim: " + claim);
+        throw invalidClaim(claim);
+    }
+
+    private static InvalidBearerTokenException invalidClaim(String claim) {
+        return new InvalidBearerTokenException("Invalid claim: " + claim);
     }
 }

@@ -7,14 +7,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Base64;
 
 /**
  * Cấu hình token (KAN-76/77). {@code jwtSecret} chỉ lấy từ môi trường ({@code JWT_SECRET}); không có giá trị mặc định.
  *
  * @param issuer              claim {@code iss} của access token
- * @param jwtSecret           khoá HMAC-SHA256, tối thiểu 32 byte (vd {@code openssl rand -base64 48})
+ * @param jwtSecret           khoá HMAC-SHA256 mã hoá Base64, decode tối thiểu 32 byte
  * @param accessTokenTtl      thời hạn access token (Jira: 15 phút)
  * @param refreshTokenTtlWeb  thời hạn refresh token WEB (schema: 7 ngày)
  * @param refreshTokenTtlMobile thời hạn refresh token MOBILE (schema: 30 ngày)
@@ -33,13 +33,31 @@ public record AuthTokenProperties(
     static final int MIN_SECRET_BYTES = 32;
 
     public AuthTokenProperties {
-        if (jwtSecret == null || jwtSecret.getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_BYTES) {
+        byte[] keyBytes = decodeJwtSecret(jwtSecret);
+        if (keyBytes.length < MIN_SECRET_BYTES) {
             throw new IllegalArgumentException(
-                    "JWT_SECRET (app.auth.token.jwt-secret) bắt buộc và phải có ít nhất 32 byte; không có giá trị mặc định");
+                    "JWT_SECRET (app.auth.token.jwt-secret) phải decode thành ít nhất 32 byte; không có giá trị mặc định");
         }
         requirePositive(accessTokenTtl, "access-token-ttl");
         requirePositive(refreshTokenTtlWeb, "refresh-token-ttl-web");
         requirePositive(refreshTokenTtlMobile, "refresh-token-ttl-mobile");
+    }
+
+    byte[] jwtKeyBytes() {
+        return decodeJwtSecret(jwtSecret);
+    }
+
+    private static byte[] decodeJwtSecret(String encodedSecret) {
+        if (encodedSecret == null || encodedSecret.isBlank()) {
+            throw new IllegalArgumentException(
+                    "JWT_SECRET (app.auth.token.jwt-secret) bắt buộc và phải là Base64 hợp lệ");
+        }
+        try {
+            return Base64.getDecoder().decode(encodedSecret);
+        } catch (IllegalArgumentException invalidBase64) {
+            throw new IllegalArgumentException(
+                    "JWT_SECRET (app.auth.token.jwt-secret) bắt buộc và phải là Base64 hợp lệ", invalidBase64);
+        }
     }
 
     private static void requirePositive(Duration value, String name) {

@@ -20,8 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.security.SecureRandom;
-
 /**
  * Quản trị viên reset mật khẩu người dùng (KAN-78). Quyền và phạm vi do {@link IUserManagementPolicy} (KAN-81)
  * quyết định; khi chưa có implementation thì fail-closed (503), không có đường tắt theo role name.
@@ -34,21 +32,19 @@ public class AdminPasswordResetService {
 
     private static final Logger log = LoggerFactory.getLogger(AdminPasswordResetService.class);
     static final String ACTION = "iam.user.password.reset";
-    private static final String ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-    private static final int TEMP_PASSWORD_LENGTH = 16;
-    private static final SecureRandom RANDOM = new SecureRandom();
-
     private final ObjectProvider<IUserManagementPolicy> policy;
     private final UserCredentialRepository users;
     private final RefreshTokenService refreshTokens;
     private final AuditLogRepository auditLog;
     private final TenantDatabaseContext tenantContext;
     private final PasswordEncoder passwordEncoder;
+    private final TemporaryPasswordGenerator temporaryPasswords;
     private final TransactionTemplate transaction;
 
     public AdminPasswordResetService(ObjectProvider<IUserManagementPolicy> policy, UserCredentialRepository users,
                                      RefreshTokenService refreshTokens, AuditLogRepository auditLog,
                                      TenantDatabaseContext tenantContext, PasswordEncoder passwordEncoder,
+                                     TemporaryPasswordGenerator temporaryPasswords,
                                      PlatformTransactionManager transactionManager) {
         this.policy = policy;
         this.users = users;
@@ -56,6 +52,7 @@ public class AdminPasswordResetService {
         this.auditLog = auditLog;
         this.tenantContext = tenantContext;
         this.passwordEncoder = passwordEncoder;
+        this.temporaryPasswords = temporaryPasswords;
         this.transaction = new TransactionTemplate(transactionManager);
     }
 
@@ -76,7 +73,7 @@ public class AdminPasswordResetService {
             });
             throw new ApiException(ErrorCode.ACCESS_DENIED);
         }
-        String temporaryPassword = generateTemporaryPassword();
+        String temporaryPassword = temporaryPasswords.generate();
         String hash = passwordEncoder.encode(temporaryPassword);
         Integer revoked = transaction.execute(status -> {
             tenantContext.bind(orgId);
@@ -98,14 +95,6 @@ public class AdminPasswordResetService {
                        ClientInfo client) {
         auditLog.append(new AuditEntry(orgId, ActorType.USER, actor.userId(), ACTION, "app_user", targetUserId,
                 result, reason, data, client.ipAddress(), client.userAgent(), client.requestId()));
-    }
-
-    private static String generateTemporaryPassword() {
-        StringBuilder builder = new StringBuilder(TEMP_PASSWORD_LENGTH);
-        for (int i = 0; i < TEMP_PASSWORD_LENGTH; i++) {
-            builder.append(ALPHABET.charAt(RANDOM.nextInt(ALPHABET.length())));
-        }
-        return builder.toString();
     }
 
     public record ResetResult(long userId, String temporaryPassword) {

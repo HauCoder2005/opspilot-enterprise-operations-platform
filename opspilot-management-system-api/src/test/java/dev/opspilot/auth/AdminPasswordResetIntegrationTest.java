@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 
 import java.sql.SQLException;
 import java.util.Set;
@@ -33,6 +34,7 @@ class AdminPasswordResetIntegrationTest extends AbstractAuthIntegrationTest {
     @TestConfiguration
     static class PolicyConfig {
         @Bean
+        @Primary
         AllowListPolicy allowListPolicy() {
             return new AllowListPolicy();
         }

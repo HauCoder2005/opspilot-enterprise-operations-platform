@@ -21,6 +21,13 @@ public enum ErrorCode {
     PASSWORD_REUSE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "Mật khẩu mới phải khác mật khẩu hiện tại."),
     SELF_RESET_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "Không thể tự reset mật khẩu của chính mình; hãy dùng chức năng đổi mật khẩu."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy tài khoản."),
+    EMPLOYEE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy nhân viên hợp lệ để cấp tài khoản."),
+    EMPLOYEE_ALREADY_HAS_ACCOUNT(HttpStatus.CONFLICT, "Nhân viên đã được cấp tài khoản."),
+    ACCOUNT_IDENTIFIER_CONFLICT(HttpStatus.CONFLICT, "Username, email hoặc số điện thoại đã được sử dụng."),
+    ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy vai trò hợp lệ."),
+    ROLE_ASSIGNMENT_CONFLICT(HttpStatus.CONFLICT, "Vai trò đã được gán trong khoảng thời gian này."),
+    PRIVILEGE_ESCALATION_NOT_ALLOWED(HttpStatus.FORBIDDEN, "Không được cấp vai trò có quyền vượt quá thẩm quyền của bạn."),
+    OWNER_ASSIGNMENT_REQUIRES_APPROVAL(HttpStatus.FORBIDDEN, "Việc cấp vai trò OWNER cần quy trình được phê duyệt riêng."),
     CONCURRENT_MODIFICATION(HttpStatus.CONFLICT, "Dữ liệu vừa được thay đổi bởi thao tác khác. Vui lòng thử lại."),
     POLICY_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Dịch vụ phân quyền chưa sẵn sàng.");
 

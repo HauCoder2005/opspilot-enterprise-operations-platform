@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.sql.SQLException;
@@ -88,6 +89,22 @@ class JwtAuthenticationIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
+    void malformedTokenVersionClaimsAreRejectedAsInvalidTokens() throws SQLException {
+        long userId = user(orgId, "jwt.tv.overflow", PASSWORD).create();
+        String overflow = signWithTokenVersion(Long.toString(Integer.MAX_VALUE + 1L), userId, orgId);
+        String fractional = signWithTokenVersion(new BigDecimal("0.5"), userId, orgId);
+
+        Response overflowResponse = api.get(ME, "Authorization", "Bearer " + overflow);
+        Response fractionalResponse = api.get(ME, "Authorization", "Bearer " + fractional);
+
+        assertThat(overflowResponse.status()).isEqualTo(401);
+        assertThat(overflowResponse.code()).isEqualTo("AUTHENTICATION_REQUIRED");
+        assertThat(overflowResponse.header("WWW-Authenticate")).isEqualTo("Bearer error=\"invalid_token\"");
+        assertThat(fractionalResponse.status()).isEqualTo(401);
+        assertThat(fractionalResponse.code()).isEqualTo("AUTHENTICATION_REQUIRED");
+    }
+
+    @Test
     void tokenVersionMismatchIsRejected() throws SQLException {
         long userId = user(orgId, "jwt.tv", PASSWORD).create();
         Response login = api.login(orgCode, "jwt.tv", PASSWORD, "MOBILE");
@@ -157,7 +174,17 @@ class JwtAuthenticationIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     private static String sign(String secret, long userId, long orgId, int tokenVersion, Instant issuedAt, Instant expiresAt) {
-        var key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        return sign(secret, userId, orgId, (Object) tokenVersion, issuedAt, expiresAt);
+    }
+
+    private static String signWithTokenVersion(Object tokenVersion, long userId, long orgId) {
+        return sign(PostgresTestDatabase.JWT_SECRET, userId, orgId, tokenVersion,
+                Instant.now(), Instant.now().plusSeconds(900));
+    }
+
+    private static String sign(String secret, long userId, long orgId, Object tokenVersion,
+                               Instant issuedAt, Instant expiresAt) {
+        var key = new SecretKeySpec(Base64.getDecoder().decode(secret), "HmacSHA256");
         var encoder = new NimbusJwtEncoder(new ImmutableSecret<>(key));
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("opspilot-api")

@@ -15,7 +15,7 @@ import static dev.opspilot.auth.AuthTestData.tokenVersion;
 import static dev.opspilot.auth.AuthTestData.user;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** KAN-78 — người dùng tự đổi mật khẩu; admin reset khi CHƯA có policy service (cấu hình production hiện tại). */
+/** KAN-78 — người dùng tự đổi mật khẩu; admin reset luôn đi qua policy service production. */
 class PasswordChangeIntegrationTest extends AbstractAuthIntegrationTest {
 
     private static final String CHANGE = "/api/v1/auth/change-password";
@@ -83,15 +83,16 @@ class PasswordChangeIntegrationTest extends AbstractAuthIntegrationTest {
     }
 
     @Test
-    void adminResetFailsClosedWhenPolicyServiceIsMissing() throws SQLException {
+    void adminResetFailsClosedWhenActorHasNoScopedPermission() throws SQLException {
         user(orgId, "pw.admin", PASSWORD).create();
         long target = user(orgId, "pw.target", PASSWORD).create();
         Response admin = api.login(orgCode, "pw.admin", PASSWORD, "MOBILE");
 
         Response response = api.post("/api/v1/iam/users/" + target + "/reset-password", null, "Authorization", bearer(admin));
 
-        assertThat(response.status()).isEqualTo(503);
-        assertThat(response.code()).isEqualTo("POLICY_SERVICE_UNAVAILABLE");
+        assertThat(response.status()).isEqualTo(403);
+        assertThat(response.code()).isEqualTo("ACCESS_DENIED");
+        assertThat(countAuditAction(orgId, "iam.user.password.reset", "DENIED", "POLICY_DENIED")).isEqualTo(1);
         assertThat(api.login(orgCode, "pw.target", PASSWORD, "WEB").status()).as("mật khẩu đích không đổi").isEqualTo(200);
     }
 
